@@ -2,60 +2,74 @@ import livros from "../models/Livro.js";
 
 //MÉTODO GET
 class LivroController {
-  static listarLivros = async (req, res) => {
+  static listarLivros = async (req, res, next) => {
     try{
       const listaLivro = await livros.find().populate("autor");
-      res.status(200).json(listaLivro);
+      if(listaLivro !== null){
+        res.status(200).json(listaLivro);
+      } else {
+        res.status(404).send({message: "Não há livros cadastrados"});
+      }
+
     } catch(error) {
-      res.status(500).send({message: `${error.message} - Falha ao listar livros`});
+      next(error);
     }
   };
-  static selecionarLivro = async (req, res) => {
+  static selecionarLivro = async (req, res, next) => {
     try{
       const {id} = req.params;
       const selecionarLivro = await livros.findById(id).populate("autor");
-      res.status(200).send(selecionarLivro);
+      if(selecionarLivro !== null) {
+        res.status(200).send(selecionarLivro);
+      } else {
+        res.status(404).send({message: "Livro não encontrado"});
+      }
     } catch(error) {
-      res.status(400).send({message: `${error.message} - Falha ao procurar livro`});
+      next(error)
     }
   };
   static listarLivroPorEditora = async (req, res) => {
     try{
       const {editora} = req.query;
       const listaLivroEditora = await livros.find({"editora": editora},{});
-      res.status(200).send(listaLivroEditora);
+      if(listaLivroEditora.length !== null) {
+        res.status(200).send(listaLivroEditora);
+      } else{
+        res.status(404).send({message: "Não há livros cadastrados para essa editora"});
+      }
+
     } catch (error) {
-      res.status(500).send({message: `${error.message} - Falha ao buscar livro`});
+      next(error);
     }
   };
   //MÉTODO POST
-  static cadastrarLivro = async (req, res) => {
+  static cadastrarLivro = async (req, res, error) => {
     try{
       let livro = new livros(req.body);
       await livro.save();
       res.status(201).send(livro.toJSON());
     } catch (error){
-        res.status(500).send({message: `${error.message} - Falha ao cadastrar livro`});
+      next(error);
     }
   };
   //METODO PUT
-  static atualizarLivro = async (req, res) => {
+  static atualizarLivro = async (req, res, next) => {
     try{
       const {id} = req.params;
       await livros.findByIdAndUpdate(id, {$set: req.body});
       res.status(200).send({message: "Livro atualizado com sucesso"});
     } catch(error) {
-      res.status(500).send({message: `${error.message} - Falha ao atualizar livro`});
+      next(error);
     }
   };
   //MÉTODO DELETE
-  static deletarLivro = async (req, res) => {
+  static deletarLivro = async (req, res, next) => {
     try{
       const {id} = req.params;
       await livros.findByIdAndDelete(id)
       res.status(200).send({message: "Livro removido com sucesso"});
     } catch(error) {
-      res.status(500).send({message: `${error.message} - Falha ao excluir livro`});
+      next(error);
     }
   };
 }
