@@ -2,69 +2,61 @@ import livros from "../models/Livro.js";
 
 //MÉTODO GET
 class LivroController {
-  static listarLivros = (req, res) => {
-    livros.find()
-      .populate("autor")
-      .exec((err, livros) => {
-        res.json(livros);
-      });
+  static listarLivros = async (req, res) => {
+    try{
+        const listaLivro = await livros.find().populate("autor");
+        res.status(200).json(listaLivro);
+    } catch(error) {
+      res.status(500).send({message: `${error.message} - Falha ao listar livros`});
+    }
   };
-  static selecionarLivro = (req, res) => {
+  static selecionarLivro = async (req, res) => {
     const {id} = req.params;
-    livros.findById(id)
-      .populate("autor", "nome")
-      .exec((err, livros) => {
-        if (err) {
-          res.status(400).send({message: `${err.message} - Falha ao procurar livro`});
-        } else {
-          res.status(200).send(livros);
-        }
-      });
+    try{
+      const selecionarLivro = await livros.findById(req.params.id).populate("autor");
+      res.status(200).send(livros);
+    } catch(error) {
+      res.status(400).send({message: `${error.message} - Falha ao procurar livro`});
+    }
   };
-  static listarLivroPorEditora = (req, res) => {
+  static listarLivroPorEditora = async (req, res) => {
     const {editora} = req.query;
-    livros.find({"editora": editora}, {}, (err, livros) => {
-      if (err) {
-        res.status(500).send({message: `${err.message} - Falha ao buscar livro`});
-      } else {
-        res.status(200).send(livros);
-      }
-    });
+    try{
+      const listaLivroEditora = await livros.find({"editora": editora},{});
+      res.status(200).send(listaLivroEditora);
+    } catch (error) {
+      res.status(500).send({message: `${error.message} - Falha ao buscar livro`});
+    }
   };
   //MÉTODO POST
-  static cadastrarLivro = (req, res) => {
+  static cadastrarLivro = async (req, res) => {
     let livro = new livros(req.body);
-    livro.save((err) => {
-      if (err) {
-        res.status(500).send({message: `${err.message} - Falha ao cadastrar livro`});
-      } else {
-        res.status(201).send(livro.toJSON());
-      }
-    });
+    try{
+      await livro.save();
+      res.status(201).send(livro.toJSON());
+    } catch (error){
+        res.status(500).send({message: `${error.message} - Falha ao cadastrar livro`});
+    }
   };
   //METODO PUT
-  static atualizarLivro = (req, res) => {
+  static atualizarLivro = async (req, res) => {
     const {id} = req.params;
-    livros.findByIdAndUpdate(id, {$set: req.body}, (err) => {
-      if (err) {
-        res.status(500).send({message: `${err.message} - Falha ao atualizar livro`});
-      } else {
-        res.status(200).send({message: "Livro atualizado com sucesso"});
-      }
-    });
+    try{
+      await livros.findByIdAndUpdate(id, {$set: req.body});
+      res.status(200).send({message: "Livro atualizado com sucesso"});
+    } catch(error) {
+      res.status(500).send({message: `${error.message} - Falha ao atualizar livro`});
+    }
   };
   //MÉTODO DELETE
-  static deletarLivro = (req, res) => {
+  static deletarLivro = async (req, res) => {
     const {id} = req.params;
-    livros.findByIdAndDelete(id, (err) => {
-      if (err) {
-        res.status(500).send({message: `${err.message} - Falha ao excluir livro`});
-      } else {
-        res.status(200).send({message: "Livro removido com sucesso"});
-      }
-    });
+    try{
+      await livros.findByIdAndDelete(id)
+      res.status(200).send({message: "Livro removido com sucesso"});
+    } catch(error) {
+      res.status(500).send({message: `${err.message} - Falha ao excluir livro`});
+    }
   };
-
 }
-
 export default LivroController;
